@@ -9,9 +9,9 @@ from .agent import (
     create_kit_server,
     run_agent,
 )
-from .config import AgentConfig, ConfigError, load_config, require_api_key
+from .config import CONFIG_HELP, AgentConfig, ConfigError, load_config, load_dotenv, require_api_key
 from .logger import Logger, create_logger, silent_logger
-from .report import RunSummary, explain_failure, format_summary, summarize_result
+from .report import RunSummary, explain_failure, format_summary, status_label, summarize_result
 from .tools.calculator import CalculatorError, calculate_tool, evaluate
 from .tools.notes import MAX_BODY_CHARS, Note, NotesStore, create_notes_tools
 
@@ -19,6 +19,7 @@ __all__ = [
     "DEFAULT_SYSTEM_PROMPT",
     "MAX_BODY_CHARS",
     "SERVER_KEY",
+    "CONFIG_HELP",
     "AgentConfig",
     "CalculatorError",
     "ConfigError",
@@ -37,8 +38,10 @@ __all__ = [
     "explain_failure",
     "format_summary",
     "load_config",
+    "load_dotenv",
     "require_api_key",
     "run_agent",
     "silent_logger",
+    "status_label",
     "summarize_result",
 ]

@@ -18,4 +18,4 @@
 
 ## Reporting a vulnerability
 
-Open a private security advisory on the GitHub repository or email the address in the repository profile. Please do not open a public issue for a vulnerability. You will get an acknowledgement within 72 hours.
+Open a private security advisory at https://github.com/forgekits/agent-sdk-kit-lite-py/security/advisories (address to be confirmed before release). Please do not open a public issue for a vulnerability. You will get an acknowledgement within 72 hours.

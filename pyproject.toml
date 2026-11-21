@@ -22,6 +22,10 @@ dev = [
   "ruff>=0.7",
 ]
 
+[project.urls]
+Homepage = "https://github.com/forgekits/agent-sdk-kit-lite-py"
+Issues = "https://github.com/forgekits/agent-sdk-kit-lite-py/issues"
+
 [project.scripts]
 agent-kit = "agent_kit_lite.cli:main"
 
@@ -37,7 +41,7 @@ testpaths = ["tests"]
 python_version = "3.10"
 strict = true
 ignore_missing_imports = true
-files = ["agent_kit_lite"]
+files = ["agent_kit_lite", "tests"]
 
 [tool.ruff]
 line-length = 110

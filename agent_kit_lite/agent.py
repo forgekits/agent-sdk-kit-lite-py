@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import os
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
@@ -20,7 +19,7 @@ from claude_agent_sdk import (
     query,
 )
 
-from .config import AgentConfig
+from .config import AgentConfig, require_api_key
 from .logger import Logger, create_logger
 from .report import RunSummary, summarize_result
 from .tools.calculator import calculate_tool
@@ -51,10 +50,12 @@ class RunResult:
     raw: Any = None
 
 
-def create_kit_server(store: NotesStore) -> Any:
-    """Build the in-process MCP server with the kit's tools. Add your own next to these."""
+def create_kit_server(store: NotesStore, extra_tools: Sequence[Any] = ()) -> Any:
+    """Build the in-process MCP server with the kit's tools plus any of your own ``@tool`` functions."""
     return create_sdk_mcp_server(
-        name="agent-sdk-kit", version="0.1.0", tools=[calculate_tool, *create_notes_tools(store)]
+        name="agent-sdk-kit",
+        version="0.1.0",
+        tools=[calculate_tool, *create_notes_tools(store), *extra_tools],
     )
 
 
@@ -116,18 +117,27 @@ async def run_agent(
     *,
     logger: Logger | None = None,
     system_prompt: str | None = None,
-    on_text: Callable[[str], None] | None = None,
+    on_text: Callable[[str], object] | None = None,
     notes_store: NotesStore | None = None,
+    extra_tools: Sequence[Any] = (),
+    allow_host_credentials: bool = False,
 ) -> RunResult:
     """Run one prompt and return the summary.
 
     A single-shot ``query()`` raises ``ResultError`` after yielding an error
     result. We keep the last result message so the caller always gets a
     summary when one exists.
+
+    Without ``ANTHROPIC_API_KEY`` the SDK would use whatever Claude Code login
+    exists on the host, which Anthropic does not permit for third-party
+    products, so the key is required unless ``allow_host_credentials`` is set
+    (local experiments only).
     """
+    if not allow_host_credentials:
+        require_api_key(config)
     log = logger or create_logger(config.log_level)
     store = notes_store or NotesStore(config.notes_dir)
-    server = create_kit_server(store)
+    server = create_kit_server(store, extra_tools)
     tool_calls: list[ToolCallRecord] = []
     options = build_options(config, server, [create_audit_hook(log, tool_calls)], system_prompt)
 
@@ -161,8 +171,3 @@ async def run_agent(
         "run end", ok=summary.ok, subtype=summary.subtype, cost_usd=summary.cost_usd, turns=summary.turns
     )
     return RunResult(summary=summary, tool_calls=tool_calls, raw=result)
-
-
-def inherit_env() -> dict[str, str]:
-    """The process environment as a plain dict, for callers who want to extend ``build_options``."""
-    return dict(os.environ)

@@ -7,4 +7,5 @@
 - `run_agent()` wrapper with locked-down SDK options, audit hook and run summary.
 - CLI: `agent-kit "<prompt>"`.
 - Unit tests with no API calls; opt-in integration test.
+- `.env` loader, API-key guard in `run_agent()`, `extra_tools`, clearer SDK-error reporting, fuller CLI help (after the first blind documentation test).
 - CI on Linux and Windows, Python 3.10 and 3.13.

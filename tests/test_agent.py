@@ -27,6 +27,7 @@ def test_build_options_locks_down(tmp_path: Path) -> None:
     assert options.max_budget_usd == 0.25
     assert options.model == "claude-opus-5-5"
     assert options.env["ANTHROPIC_API_KEY"] == "test-key"
+    assert isinstance(options.mcp_servers, dict)
     assert list(options.mcp_servers.keys()) == [SERVER_KEY]
     assert options.hooks is not None
     assert options.hooks["PreToolUse"][0].matcher == f"^mcp__{SERVER_KEY}__"

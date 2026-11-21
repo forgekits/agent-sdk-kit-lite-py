@@ -63,7 +63,12 @@ def summarize_result(msg: Any) -> RunSummary:
     result_text = _get(msg, "result", default="") or ""
     errors = tuple(str(e) for e in (_get(msg, "errors", default=None) or []))
     ok = subtype == "success" and not is_error
-    errs = errors if errors else (() if subtype == "success" else (subtype,))
+    if subtype == "success" and is_error:
+        # The SDK reports auth and transport failures as subtype "success" with is_error
+        # set and the message in `result`. Surface that as a failure with the text as the error.
+        errs: tuple[str, ...] = (str(result_text) or "SDK reported an error",)
+    else:
+        errs = errors if errors else (() if subtype == "success" else (subtype,))
     return RunSummary(
         ok=ok,
         subtype=subtype,
@@ -87,10 +92,15 @@ def _money(value: float) -> str:
     return f"${value:.4f}"
 
 
+def status_label(s: RunSummary) -> str:
+    """Label for the status line: a failed "success" is an SDK-level error."""
+    return "sdk error" if (not s.ok and s.subtype == "success") else s.subtype
+
+
 def format_summary(s: RunSummary) -> str:
     """Human-readable multi-line report for terminals and logs."""
     lines = [
-        f"status      {'ok' if s.ok else 'failed'} ({s.subtype})",
+        f"status      {'ok' if s.ok else 'failed'} ({status_label(s)})",
         f"turns       {s.turns}",
         f"duration    {s.duration_ms / 1000:.1f}s total, {s.api_ms / 1000:.1f}s in API",
         f"cost        {_money(s.cost_usd)} (local estimate)",
@@ -109,7 +119,11 @@ def format_summary(s: RunSummary) -> str:
 def explain_failure(s: RunSummary) -> str | None:
     """One sentence an operator can act on, or None for a clean success."""
     if s.subtype == "success":
-        return None if s.ok else "The run finished but the SDK flagged an error."
+        return (
+            None
+            if s.ok
+            else f"The SDK reported an error: {'; '.join(s.errors)}. Check the API key and network first."
+        )
     if s.subtype == "error_max_turns":
         return f"Stopped after {s.turns} turns (AGENT_MAX_TURNS). Raise the limit or narrow the task."
     if s.subtype == "error_max_budget_usd":
